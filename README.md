@@ -109,6 +109,33 @@ This is managed through the `plan_features` pivot table. The attach form prompts
 
 Plan and feature names/descriptions support multiple locales via [spatie/laravel-translatable](https://github.com/spatie/laravel-translatable). The admin forms use the current application locale. To support multiple locales in the admin, consider a locale switcher or [filament-spatie-translatable](https://filamentphp.com/plugins/filament-spatie-translatable).
 
+## Drop-in Relation Manager
+
+The package provides a reusable `PlanSubscriptionsRelationManager` you can add to any resource whose model uses `HasPlanSubscriptions`:
+
+```php
+use Crumbls\SubscriptionsFilament\RelationManagers\PlanSubscriptionsRelationManager;
+
+class TenantResource extends Resource
+{
+    public static function getRelations(): array
+    {
+        return [
+            PlanSubscriptionsRelationManager::class,
+        ];
+    }
+}
+```
+
+This gives you a full subscriptions tab on the resource with:
+- List of all subscriptions with status badges
+- Create new subscription (with plan picker)
+- Cancel / Renew / Delete inline actions
+- Filter by plan
+- View subscription details
+
+Works with any model — User, Tenant, Team, Organization — as long as it uses the `HasPlanSubscriptions` trait.
+
 ## Customization
 
 All resources resolve model classes from `config/subscriptions.php`. If you've swapped in custom models, the admin panel uses them automatically — no additional configuration needed.
