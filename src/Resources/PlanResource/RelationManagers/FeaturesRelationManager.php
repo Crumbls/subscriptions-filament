@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Crumbls\SubscriptionsFilament\Resources\PlanResource\RelationManagers;
 
 use Crumbls\Subscriptions\Enums\Interval;
+use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -24,25 +25,25 @@ class FeaturesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('name')
+            TextInput::make('name.' . app()->getLocale())
+                ->label('Name')
                 ->required()
                 ->maxLength(150),
 
-            TextInput::make('slug')
-                ->required()
-                ->maxLength(150)
-                ->helperText('Used to reference this feature in code.'),
+            TextInput::make('description.' . app()->getLocale())
+                ->label('Description')
+                ->maxLength(32768),
 
-            TextInput::make('value')
-                ->required()
-                ->helperText('Numeric limit, or "true"/"false" for boolean features.'),
+            TextInput::make('slug')
+                ->maxLength(150)
+                ->helperText('Auto-generated from name if left blank.'),
 
             TextInput::make('resettable_period')
                 ->numeric()
                 ->default(0)
                 ->label('Reset Every'),
 
-            Select::make('resettable_interval')
+            \Filament\Forms\Components\Select::make('resettable_interval')
                 ->options(Interval::class)
                 ->default('month')
                 ->label('Reset Interval'),
@@ -65,7 +66,8 @@ class FeaturesRelationManager extends RelationManager
                     ->searchable(),
 
                 TextColumn::make('value')
-                    ->badge(),
+                    ->badge()
+                    ->getStateUsing(fn ($record) => $record->pivot?->value),
 
                 TextColumn::make('resettable_period')
                     ->formatStateUsing(function ($record) {
@@ -79,14 +81,26 @@ class FeaturesRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make(),
+                AttachAction::make()
+                    ->preloadRecordSelect()
+                    ->form(fn (AttachAction $action): array => [
+                        $action->getRecordSelect(),
+                        TextInput::make('value')
+                            ->required()
+                            ->helperText('Numeric limit, or "true"/"false" for boolean features.'),
+                        TextInput::make('sort_order')
+                            ->numeric()
+                            ->default(0),
+                    ]),
             ])
             ->recordActions([
                 EditAction::make(),
+                DetachAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DetachBulkAction::make(),
                 ]),
             ])
             ->defaultSort('sort_order');

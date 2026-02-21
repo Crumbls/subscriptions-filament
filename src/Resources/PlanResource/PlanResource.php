@@ -10,6 +10,7 @@ use UnitEnum;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Pages\EditPlan;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Pages\ListPlans;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\RelationManagers\FeaturesRelationManager;
+use Crumbls\SubscriptionsFilament\Resources\PlanResource\RelationManagers\SubscriptionsRelationManager;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Schemas\PlanForm;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Tables\PlansTable;
 use Filament\Resources\Resource;
@@ -46,6 +47,7 @@ class PlanResource extends Resource
     {
         return [
             FeaturesRelationManager::class,
+            SubscriptionsRelationManager::class,
         ];
     }
 

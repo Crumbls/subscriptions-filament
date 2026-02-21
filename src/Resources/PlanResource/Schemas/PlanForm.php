@@ -25,11 +25,13 @@ class PlanForm
                         ->schema([
                             Section::make('Plan Details')
                                 ->schema([
-                                    TextInput::make('name')
+                                    TextInput::make('name.' . app()->getLocale())
+                                        ->label('Name')
                                         ->required()
                                         ->maxLength(150),
 
-                                    TextInput::make('description')
+                                    TextInput::make('description.' . app()->getLocale())
+                                        ->label('Description')
                                         ->maxLength(32768)
                                         ->columnSpanFull(),
                                 ]),

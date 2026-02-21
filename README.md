@@ -1,14 +1,19 @@
 # Crumbls Subscriptions Filament
 
-Filament v5 admin panel for [crumbls/subscriptions](https://github.com/Crumbls/subscriptions).
+A Filament v5 admin panel plugin for [crumbls/subscriptions](https://github.com/Crumbls/subscriptions). Manage plans, features, and subscriptions through a complete admin interface.
+
+## Requirements
+
+- PHP 8.2+
+- Laravel 11 or 12
+- Filament v5
+- [crumbls/subscriptions](https://github.com/Crumbls/subscriptions) ^1.0
 
 ## Installation
 
 ```bash
 composer require crumbls/subscriptions-filament
 ```
-
-## Setup
 
 Register the plugin in your Filament panel provider:
 
@@ -24,24 +29,110 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-## What's Included
+That's it. The plugin registers all resources automatically.
 
-### Plan Resource
-- Full CRUD for plans (name, pricing, billing cycle, trial/grace periods)
-- Features relation manager (add/edit/remove plan features inline)
-- Active/inactive filter, subscriber count column
+> **Note:** If you've previously run `php artisan filament:cache-components`, you'll need to clear the cache after installing:
+> ```bash
+> php artisan filament:cache-components
+> ```
+> Or delete `bootstrap/cache/filament/panels/*.php`.
+
+## Resources
+
+All resources appear under a **Subscriptions** navigation group in your admin sidebar.
+
+### Plans
+
+Full CRUD for subscription plans.
+
+**List view:**
+- Name, price (formatted with currency), billing cycle, subscriber count, active status
+- Filter by active/inactive
+- Sortable by display order
+- Search by name or slug
+
+**Create/Edit form:**
+- Plan details: name, description (translatable)
+- Pricing: price, signup fee, currency (USD/EUR/GBP/CAD/AUD)
+- Billing cycle: invoice period + interval
+- Status: active toggle, subscriber limit, sort order
+- Trial period: collapsible section with period + interval
+- Grace period: collapsible section with period + interval
+
+**Relation managers:**
+
+- **Features** — Attach existing features to the plan with a per-plan `value` (the limit). Create new features inline. Detach features without deleting them. Edit or delete features.
+- **Subscriptions** — View all subscriptions for this plan. Create new subscriptions. Delete subscriptions. Status badges (Active, Trial, Grace, Canceled, Ended).
+
+### Features
+
+Standalone CRUD for features. Features exist independently of plans and can be attached to multiple plans with different values.
+
+**List view:**
+- Name, slug, number of plans using this feature, reset cycle
 - Sortable by display order
 
-### Subscription Resource
-- List all subscriptions with status badges (Active, Trial, Grace, Canceled, Ended)
+**Create/Edit form:**
+- Name, description (translatable), slug (auto-generated)
+- Reset cycle: period + interval (set to 0 for running counts like "users")
+- Sort order
+
+### Subscriptions
+
+Read-only list with management actions.
+
+**List view:**
+- Subscriber type + ID, plan name, slug, start/end dates, status badge
+- Status badges: Active (green), Trial (blue), Grace (warning), Canceled (red), Ended (gray)
 - Filter by plan
-- Inline actions: Cancel, Renew
-- View page with full subscription details and feature usage breakdown
-- Header actions: Cancel, Reactivate, Renew
+- Search by slug
+
+**Inline actions:**
+- **Cancel** — Cancel immediately with confirmation dialog
+- **Renew** — Renew an ended (non-canceled) subscription
+
+**View page:**
+- Full subscription details and feature usage breakdown
+
+## Feature/Plan Workflow
+
+The key concept: **features are defined once, values are set per-plan**.
+
+1. **Create features** in the Features resource (e.g. "Users", "API Calls", "SSL")
+2. **Edit a plan** → Features tab → **Attach** a feature
+3. Set the **value** for this plan (e.g. "Users" → `10` on Basic, `50` on Pro)
+4. The same feature can have different values across different plans
+
+This is managed through the `plan_features` pivot table. The attach form prompts for `value` and `sort_order`.
+
+## Translatable Fields
+
+Plan and feature names/descriptions support multiple locales via [spatie/laravel-translatable](https://github.com/spatie/laravel-translatable). The admin forms use the current application locale. To support multiple locales in the admin, consider a locale switcher or [filament-spatie-translatable](https://filamentphp.com/plugins/filament-spatie-translatable).
 
 ## Customization
 
-Both resources use the model classes from your `config/subscriptions.php`, so custom models work automatically.
+All resources resolve model classes from `config/subscriptions.php`. If you've swapped in custom models, the admin panel uses them automatically — no additional configuration needed.
+
+### Extending resources
+
+You can extend any resource class and register your own plugin:
+
+```php
+use Crumbls\SubscriptionsFilament\Resources\PlanResource\PlanResource;
+
+class CustomPlanResource extends PlanResource
+{
+    // Add custom columns, filters, actions, etc.
+}
+```
+
+## What's Included
+
+| Resource | Actions | Relation Managers |
+|---|---|---|
+| **Plans** | List, Create, Edit, Delete | Features (attach/detach/create/edit/delete), Subscriptions (create/view/delete) |
+| **Features** | List, Create, Edit, Delete | — |
+| **Subscriptions** | List, View, Cancel, Renew | — |
 
 ## License
 
