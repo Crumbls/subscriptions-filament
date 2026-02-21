@@ -1,0 +1,26 @@
+{
+    "name": "crumbls/subscriptions-filament",
+    "description": "Filament admin panel for crumbls/subscriptions — manage plans, features, and subscriptions.",
+    "type": "library",
+    "keywords": ["filament", "subscription", "laravel", "admin"],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "crumbls/subscriptions": "^1.0|dev-main",
+        "filament/filament": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Crumbls\\SubscriptionsFilament\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Crumbls\\SubscriptionsFilament\\SubscriptionsFilamentServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
