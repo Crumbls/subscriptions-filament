@@ -4,10 +4,11 @@ A Filament v5 admin panel plugin for [crumbls/subscriptions](https://github.com/
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11 or 12
-- Filament v5
-- [crumbls/subscriptions](https://github.com/Crumbls/subscriptions) ^1.0
+| Package | PHP | Laravel | Filament | `crumbls/subscriptions` |
+|---|---|---|---|---|
+| `2.x` | `8.3`, `8.4` | `11.x`, `12.x`, `13.x` | `5.x` | `^2.0` |
+
+Upgrading from `1.x`? See [`CHANGELOG.md`](./CHANGELOG.md) for the breaking changes that came with the `crumbls/subscriptions` 2.0 bump, and the parent package's [`UPGRADING.md`](https://github.com/Crumbls/subscriptions/blob/main/UPGRADING.md) for the schema migration.
 
 ## Installation
 

@@ -20,12 +20,6 @@ class SubscriptionsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-	    Gate::after(function ($user, $ability) {
-		    return true;
-	    });
-	    Gate::before(function ($user) {
-		    return true;
-	    });
         $panel->resources([
             PlanResource::class,
             SubscriptionResource::class,
