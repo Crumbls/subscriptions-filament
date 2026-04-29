@@ -12,22 +12,34 @@ use Crumbls\SubscriptionsFilament\Resources\FeatureResource\Schemas\FeatureForm;
 use Crumbls\SubscriptionsFilament\Resources\FeatureResource\Tables\FeaturesTable;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
 class FeatureResource extends Resource
 {
-    protected static string|BackedEnum|null $navigationIcon = null;
-
-    protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
-
-    protected static ?string $modelLabel = 'Feature';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSparkles;
 
     protected static ?int $navigationSort = 3;
 
     public static function getModel(): string
     {
         return config('subscriptions.models.feature');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('subscriptions-filament::subscriptions-filament.resources.feature.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('subscriptions-filament::subscriptions-filament.resources.feature.plural_label');
+    }
+
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+        return __('subscriptions-filament::subscriptions-filament.navigation.group');
     }
 
     public static function form(Schema $schema): Schema

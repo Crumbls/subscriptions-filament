@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Drop-in relation manager for any resource whose model uses HasPlanSubscriptions.
@@ -37,34 +38,38 @@ class PlanSubscriptionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'planSubscriptions';
 
-    protected static ?string $title = 'Subscriptions';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('subscriptions-filament::subscriptions-filament.relation_managers.subscriptions.title');
+    }
 
     public function form(Schema $schema): Schema
     {
         return $schema->components([
             TextInput::make('name.' . app()->getLocale())
-                ->label('Name')
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.name'))
                 ->required()
                 ->maxLength(150),
 
             TextInput::make('description.' . app()->getLocale())
-                ->label('Description')
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.description'))
                 ->maxLength(32768),
 
             Select::make('plan_id')
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.plan'))
                 ->relationship('plan', 'name')
                 ->required()
                 ->searchable()
                 ->preload(),
 
             DateTimePicker::make('trial_ends_at')
-                ->label('Trial Ends At'),
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.trial_ends_at')),
 
             DateTimePicker::make('starts_at')
-                ->label('Starts At'),
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.starts_at')),
 
             DateTimePicker::make('ends_at')
-                ->label('Ends At'),
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.ends_at')),
         ]);
     }
 
@@ -73,57 +78,53 @@ class PlanSubscriptionsRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('plan.name')
-                    ->label('Plan')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.plan'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('name')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.name'))
                     ->searchable(),
 
                 TextColumn::make('starts_at')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.starts_at'))
                     ->dateTime()
                     ->sortable(),
 
                 TextColumn::make('ends_at')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.ends_at'))
                     ->dateTime()
                     ->sortable(),
 
                 TextColumn::make('status')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.status'))
                     ->badge()
-                    ->getStateUsing(function ($record) {
-                        if ($record->canceled()) {
-                            return 'Canceled';
-                        }
-                        if ($record->ended()) {
-                            return $record->onGracePeriod() ? 'Grace' : 'Ended';
-                        }
-                        if ($record->onTrial()) {
-                            return 'Trial';
-                        }
-
-                        return 'Active';
-                    })
-                    ->color(fn (string $state) => match ($state) {
-                        'Active' => 'success',
-                        'Trial' => 'info',
-                        'Grace' => 'warning',
-                        'Canceled' => 'danger',
-                        'Ended' => 'gray',
+                    ->getStateUsing(fn ($record): string => self::resolveStatusKey($record))
+                    ->formatStateUsing(fn (string $state): string => __("subscriptions-filament::subscriptions-filament.subscription.statuses.{$state}"))
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'trial' => 'info',
+                        'grace' => 'warning',
+                        'canceled' => 'danger',
+                        'ended' => 'gray',
                         default => 'gray',
                     }),
 
                 TextColumn::make('canceled_at')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.canceled_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('plan')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.columns.plan'))
                     ->relationship('plan', 'name'),
             ])
             ->headerActions([
@@ -132,20 +133,20 @@ class PlanSubscriptionsRelationManager extends RelationManager
             ->recordActions([
                 ViewAction::make(),
                 Action::make('cancel')
-                    ->label('Cancel')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.actions.cancel.label'))
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
-                    ->modalDescription('Cancel this subscription immediately?')
+                    ->modalDescription(__('subscriptions-filament::subscriptions-filament.subscription.actions.cancel.modal_description'))
                     ->action(fn ($record) => $record->cancel(immediately: true))
-                    ->visible(fn ($record) => $record->active() && ! $record->canceled()),
+                    ->visible(fn ($record): bool => $record->active() && ! $record->canceled()),
                 Action::make('renew')
-                    ->label('Renew')
+                    ->label(__('subscriptions-filament::subscriptions-filament.subscription.actions.renew.label'))
                     ->color('success')
                     ->icon('heroicon-o-arrow-path')
                     ->requiresConfirmation()
                     ->action(fn ($record) => $record->renew())
-                    ->visible(fn ($record) => $record->ended() && ! $record->canceled()),
+                    ->visible(fn ($record): bool => $record->ended() && ! $record->canceled()),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -154,5 +155,22 @@ class PlanSubscriptionsRelationManager extends RelationManager
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    protected static function resolveStatusKey($record): string
+    {
+        if ($record->canceled()) {
+            return 'canceled';
+        }
+
+        if ($record->ended()) {
+            return $record->onGracePeriod() ? 'grace' : 'ended';
+        }
+
+        if ($record->onTrial()) {
+            return 'trial';
+        }
+
+        return 'active';
     }
 }

@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Crumbls\SubscriptionsFilament\Resources\PlanResource\RelationManagers;
 
-use Crumbls\Subscriptions\Enums\Interval;
+use Crumbls\SubscriptionsFilament\Resources\FeatureResource\Schemas\FeatureForm;
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -25,84 +23,62 @@ class FeaturesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('name.' . app()->getLocale())
-                ->label('Name')
+            ...FeatureForm::components(),
+
+            TextInput::make('value')
+                ->label(__('subscriptions-filament::subscriptions-filament.relation_managers.features.fields.value'))
                 ->required()
-                ->maxLength(150),
-
-            TextInput::make('description.' . app()->getLocale())
-                ->label('Description')
-                ->maxLength(32768),
-
-            TextInput::make('slug')
-                ->maxLength(150)
-                ->helperText('Auto-generated from name if left blank.'),
-
-            TextInput::make('resettable_period')
-                ->numeric()
-                ->default(0)
-                ->label('Reset Every'),
-
-            \Filament\Forms\Components\Select::make('resettable_interval')
-                ->options(Interval::class)
-                ->default('month')
-                ->label('Reset Interval'),
-
-            TextInput::make('sort_order')
-                ->numeric()
-                ->default(0),
+                ->helperText(__('subscriptions-filament::subscriptions-filament.relation_managers.features.fields.value_helper')),
         ]);
     }
 
     public function table(Table $table): Table
     {
+        $pivotTable = config('subscriptions.tables.plan_features', 'plan_features');
+        $pivotSortColumn = "{$pivotTable}.sort_order";
+
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('subscriptions-filament::subscriptions-filament.relation_managers.features.columns.name'))
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('slug')
-                    ->searchable(),
-
-                TextColumn::make('value')
-                    ->badge()
-                    ->getStateUsing(fn ($record) => $record->pivot?->value),
+                TextColumn::make('pivot.value')
+                    ->label(__('subscriptions-filament::subscriptions-filament.relation_managers.features.columns.value')),
 
                 TextColumn::make('resettable_period')
-                    ->formatStateUsing(function ($record) {
+                    ->label(__('subscriptions-filament::subscriptions-filament.relation_managers.features.columns.resets'))
+                    ->formatStateUsing(function ($record): string {
                         if (! $record->resettable_period) {
-                            return 'Never';
+                            return __('subscriptions-filament::subscriptions-filament.common.never');
                         }
 
                         return "{$record->resettable_period} {$record->resettable_interval?->value}(s)";
-                    })
-                    ->label('Resets'),
+                    }),
             ])
             ->headerActions([
                 CreateAction::make(),
                 AttachAction::make()
                     ->preloadRecordSelect()
+                    ->recordTitle(fn ($record): string => $record->name)
                     ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
                         TextInput::make('value')
+                            ->label(__('subscriptions-filament::subscriptions-filament.relation_managers.features.fields.value'))
                             ->required()
-                            ->helperText('Numeric limit, or "true"/"false" for boolean features.'),
-                        TextInput::make('sort_order')
-                            ->numeric()
-                            ->default(0),
+                            ->helperText(__('subscriptions-filament::subscriptions-filament.relation_managers.features.fields.value_helper')),
                     ]),
             ])
             ->recordActions([
-                EditAction::make(),
                 DetachAction::make(),
-                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DetachBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('sort_order');
+            ->reorderable($pivotSortColumn)
+            ->defaultSort($pivotSortColumn);
     }
 }

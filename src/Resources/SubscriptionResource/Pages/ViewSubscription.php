@@ -6,9 +6,9 @@ namespace Crumbls\SubscriptionsFilament\Resources\SubscriptionResource\Pages;
 
 use Crumbls\SubscriptionsFilament\Resources\SubscriptionResource\SubscriptionResource;
 use Filament\Actions\Action;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ViewSubscription extends ViewRecord
@@ -18,53 +18,73 @@ class ViewSubscription extends ViewRecord
     public function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Subscription')
+            Section::make(__('subscriptions-filament::subscriptions-filament.subscription.view.sections.details'))
                 ->columns(3)
                 ->schema([
                     TextEntry::make('plan.name')
-                        ->label('Plan'),
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.plan')),
 
-                    TextEntry::make('slug'),
+                    TextEntry::make('slug')
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.slug')),
 
                     TextEntry::make('subscriber_type')
-                        ->label('Subscriber Type')
-                        ->formatStateUsing(fn (string $state) => class_basename($state)),
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.subscriber_type'))
+                        ->formatStateUsing(fn (string $state): string => class_basename($state)),
 
                     TextEntry::make('subscriber_id')
-                        ->label('Subscriber ID'),
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.subscriber_id')),
 
                     TextEntry::make('starts_at')
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.starts_at'))
                         ->dateTime(),
 
                     TextEntry::make('ends_at')
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.ends_at'))
                         ->dateTime(),
 
                     TextEntry::make('trial_ends_at')
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.trial_ends_at'))
                         ->dateTime()
-                        ->placeholder('No trial'),
+                        ->placeholder(__('subscriptions-filament::subscriptions-filament.subscription.placeholders.no_trial')),
 
                     TextEntry::make('canceled_at')
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.canceled_at'))
                         ->dateTime()
-                        ->placeholder('Not canceled'),
+                        ->placeholder(__('subscriptions-filament::subscriptions-filament.subscription.placeholders.not_canceled')),
 
                     TextEntry::make('created_at')
+                        ->label(__('subscriptions-filament::subscriptions-filament.subscription.fields.created_at'))
                         ->dateTime(),
                 ]),
 
-            Section::make('Feature Usage')
-                ->schema(function ($record) {
+            Section::make(__('subscriptions-filament::subscriptions-filament.subscription.view.sections.usage'))
+                ->schema(function ($record): array {
                     $entries = [];
+
                     foreach ($record->usage()->with('feature')->get() as $usage) {
-                        $featureName = $usage->feature?->name ?? "Feature #{$usage->feature_id}";
+                        $featureName = $usage->feature?->name ?? __(
+                            'subscriptions-filament::subscriptions-filament.subscription.view.feature_fallback',
+                            ['id' => $usage->feature_id],
+                        );
+
+                        $state = $usage->valid_until
+                            ? __('subscriptions-filament::subscriptions-filament.subscription.view.usage_state_with_reset', [
+                                'used' => $usage->used,
+                                'date' => $usage->valid_until->format('M j, Y'),
+                            ])
+                            : __('subscriptions-filament::subscriptions-filament.subscription.view.usage_state', [
+                                'used' => $usage->used,
+                            ]);
+
                         $entries[] = TextEntry::make("usage_{$usage->id}")
                             ->label($featureName)
-                            ->getStateUsing(fn () => "{$usage->used} used" . ($usage->valid_until ? " (resets {$usage->valid_until->format('M j, Y')})" : ''));
+                            ->getStateUsing(fn (): string => $state);
                     }
 
                     return $entries ?: [
                         TextEntry::make('no_usage')
                             ->label('')
-                            ->getStateUsing(fn () => 'No feature usage recorded.'),
+                            ->getStateUsing(fn (): string => __('subscriptions-filament::subscriptions-filament.subscription.placeholders.no_usage')),
                     ];
                 }),
         ]);
@@ -74,26 +94,26 @@ class ViewSubscription extends ViewRecord
     {
         return [
             Action::make('cancel')
-                ->label('Cancel Subscription')
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.actions.cancel.header_label'))
                 ->color('danger')
                 ->requiresConfirmation()
-                ->modalDescription('Cancel this subscription immediately?')
+                ->modalDescription(__('subscriptions-filament::subscriptions-filament.subscription.actions.cancel.modal_description'))
                 ->action(fn () => $this->record->cancel(immediately: true))
-                ->visible(fn () => $this->record->active() && ! $this->record->canceled()),
+                ->visible(fn (): bool => $this->record->active() && ! $this->record->canceled()),
 
             Action::make('reactivate')
-                ->label('Reactivate')
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.actions.reactivate.label'))
                 ->color('success')
                 ->requiresConfirmation()
                 ->action(fn () => $this->record->reactivate())
-                ->visible(fn () => $this->record->pendingCancellation()),
+                ->visible(fn (): bool => $this->record->pendingCancellation()),
 
             Action::make('renew')
-                ->label('Renew')
+                ->label(__('subscriptions-filament::subscriptions-filament.subscription.actions.renew.label'))
                 ->color('warning')
                 ->requiresConfirmation()
                 ->action(fn () => $this->record->renew())
-                ->visible(fn () => $this->record->ended() && ! $this->record->canceled()),
+                ->visible(fn (): bool => $this->record->ended() && ! $this->record->canceled()),
         ];
     }
 }

@@ -7,8 +7,8 @@ namespace Crumbls\SubscriptionsFilament\Resources\PlanResource\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -19,39 +19,50 @@ class PlansTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('slug')
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.slug'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('price')
-                    ->money(fn ($record) => $record->currency)
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.price'))
+                    ->formatStateUsing(fn ($record): string => $record->formattedPrice())
                     ->sortable(),
 
                 TextColumn::make('invoice_interval')
-                    ->formatStateUsing(fn ($record) => "{$record->invoice_period} {$record->invoice_interval->value}(s)")
-                    ->label('Billing Cycle'),
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.billing_cycle'))
+                    ->formatStateUsing(function ($record): string {
+                        $interval = $record->invoice_interval?->value;
+
+                        if ($interval === null) {
+                            return '—';
+                        }
+
+                        return "{$record->invoice_period} {$interval}(s)";
+                    }),
 
                 TextColumn::make('subscriptions_count')
                     ->counts('subscriptions')
-                    ->label('Subscribers')
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.subscribers'))
                     ->sortable(),
 
-                IconColumn::make('is_active')
-                    ->boolean()
-                    ->label('Active')
+                ToggleColumn::make('is_active')
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.active'))
                     ->sortable(),
 
                 TextColumn::make('created_at')
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label(__('subscriptions-filament::subscriptions-filament.plan.filters.active')),
             ])
             ->recordActions([
                 EditAction::make(),

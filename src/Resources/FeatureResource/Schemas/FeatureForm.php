@@ -14,47 +14,47 @@ class FeatureForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema->components([
-            Section::make('Feature Details')
+        return $schema->components(self::components());
+    }
+
+    /**
+     * @return array<int, \Filament\Schemas\Components\Component>
+     */
+    public static function components(): array
+    {
+        return [
+            Section::make(__('subscriptions-filament::subscriptions-filament.feature.sections.details'))
                 ->schema([
                     TextInput::make('name.' . app()->getLocale())
-                        ->label('Name')
+                        ->label(__('subscriptions-filament::subscriptions-filament.feature.fields.name'))
                         ->required()
                         ->maxLength(150),
 
                     TextInput::make('description.' . app()->getLocale())
-                        ->label('Description')
+                        ->label(__('subscriptions-filament::subscriptions-filament.feature.fields.description'))
                         ->maxLength(32768),
 
                     TextInput::make('slug')
+                        ->label(__('subscriptions-filament::subscriptions-filament.feature.fields.slug'))
                         ->maxLength(150)
-                        ->helperText('Auto-generated from name if left blank.'),
+                        ->helperText(__('subscriptions-filament::subscriptions-filament.feature.fields.slug_helper')),
                 ]),
 
-            Section::make('Reset Cycle')
+            Section::make(__('subscriptions-filament::subscriptions-filament.feature.sections.reset_cycle'))
                 ->columns(2)
                 ->schema([
                     TextInput::make('resettable_period')
-                        ->numeric()
-                        ->default(0)
-                        ->label('Reset Every'),
-
-                    Select::make('resettable_interval')
-                        ->options(Interval::class)
-                        ->default('month')
-                        ->label('Reset Interval'),
-                ])
-                ->collapsible()
-                ->collapsed(),
-
-            Section::make('Display')
-                ->schema([
-                    TextInput::make('sort_order')
+                        ->label(__('subscriptions-filament::subscriptions-filament.feature.fields.resettable_period'))
                         ->numeric()
                         ->default(0),
+
+                    Select::make('resettable_interval')
+                        ->label(__('subscriptions-filament::subscriptions-filament.feature.fields.resettable_interval'))
+                        ->options(Interval::class)
+                        ->default('month'),
                 ])
                 ->collapsible()
                 ->collapsed(),
-        ]);
+        ];
     }
 }

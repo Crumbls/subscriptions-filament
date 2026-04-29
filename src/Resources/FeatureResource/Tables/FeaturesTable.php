@@ -17,28 +17,31 @@ class FeaturesTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('subscriptions-filament::subscriptions-filament.feature.columns.name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('slug')
+                    ->label(__('subscriptions-filament::subscriptions-filament.feature.columns.slug'))
                     ->searchable(),
 
                 TextColumn::make('plans_count')
                     ->counts('plans')
-                    ->label('Plans')
+                    ->label(__('subscriptions-filament::subscriptions-filament.feature.columns.plans'))
                     ->sortable(),
 
                 TextColumn::make('resettable_period')
-                    ->formatStateUsing(function ($record) {
+                    ->label(__('subscriptions-filament::subscriptions-filament.feature.columns.resets'))
+                    ->formatStateUsing(function ($record): string {
                         if (! $record->resettable_period) {
-                            return 'Never';
+                            return __('subscriptions-filament::subscriptions-filament.common.never');
                         }
 
                         return "{$record->resettable_period} {$record->resettable_interval?->value}(s)";
-                    })
-                    ->label('Resets'),
+                    }),
 
                 TextColumn::make('created_at')
+                    ->label(__('subscriptions-filament::subscriptions-filament.feature.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -51,6 +54,6 @@ class FeaturesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('sort_order');
+            ->defaultSort('name');
     }
 }

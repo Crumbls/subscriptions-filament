@@ -6,7 +6,6 @@ namespace Crumbls\SubscriptionsFilament\Resources\PlanResource;
 
 use BackedEnum;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Pages\CreatePlan;
-use UnitEnum;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Pages\EditPlan;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\Pages\ListPlans;
 use Crumbls\SubscriptionsFilament\Resources\PlanResource\RelationManagers\FeaturesRelationManager;
@@ -17,12 +16,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class PlanResource extends Resource
 {
-    protected static string|BackedEnum|null $navigationIcon = null;
-
-    protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedReceiptPercent;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -31,6 +29,21 @@ class PlanResource extends Resource
     public static function getModel(): string
     {
         return config('subscriptions.models.plan');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('subscriptions-filament::subscriptions-filament.resources.plan.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('subscriptions-filament::subscriptions-filament.resources.plan.plural_label');
+    }
+
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+        return __('subscriptions-filament::subscriptions-filament.navigation.group');
     }
 
     public static function form(Schema $schema): Schema
